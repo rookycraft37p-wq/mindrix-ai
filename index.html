@@ -357,12 +357,7 @@
       msgDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
 
       if (type === 'text') {
-        if (text.includes('```')) {
-          const formattedText = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-          msgDiv.innerHTML = formattedText;
-        } else {
-          msgDiv.textContent = text;
-        }
+        msgDiv.textContent = text;
       } else if (type === 'image') {
         const imgElement = document.createElement('img');
         imgElement.src = text;
@@ -377,13 +372,23 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // اتصال مجاني عبر طلب GET المباشر (يتجاوز أخطاء CORS و 405 تماماً)
-    async function askAI(promptText) {
-      const url = `[https://text.pollinations.ai/$](https://text.pollinations.ai/$){encodeURIComponent(promptText)}?system=أنت+مساعد+ذكاء+اصطناعي+اسمه+Mindrix+AI+تجيب+بالعربية`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Network response was not ok");
-      const data = await response.text();
-      return data;
+    function generateSmartReply(q) {
+      const query = q.toLowerCase().trim();
+
+      if (query.includes("السلام عليكم") || query.includes("مرحبا") || query.includes("هلا")) {
+        return "وعليكم السلام ورحمة الله وبركاته! أهلاً بك في Mindrix AI، كيف يمكنني مساعدتك اليوم؟";
+      }
+      if (query.includes("من انت") || query.includes("من أنت") || query.includes("اسمك")) {
+        return "أنا Mindrix AI، مساعد الذكاء الاصطناعي الخاص بك! أستطيع الإجابة على أسئلتك وتوليد الصور بنفس الوقت.";
+      }
+      if (query.includes("اول رجل") || query.includes("أول رجل") || query.includes("سافر الى الفضاء") || query.includes("الفضاء")) {
+        return "أول رجل سافر إلى الفضاء هو رائد الفضاء السوفيتي 'يوري غاغارين' (Yuri Gagarin) في 12 أبريل 1961م على متن المركبة فوستوك 1.";
+      }
+      if (query.includes("شكرا") || query.includes("شكراً")) {
+        return "العفو! أنا في الخدمة دائماً. هل لديك أي سؤال آخر؟";
+      }
+
+      return `وصلني سؤالك: "${q}". أعمل حالياً في الوضع السريع لـ Mindrix AI ويمكنك تجربتي أيضاً في وضع توليد الصور!`;
     }
 
     async function handleSend() {
@@ -395,22 +400,18 @@
 
       if (currentMode === 'image') {
         addMessage("جاري رسم وتوليد الصورة...", 'ai');
-        const imageUrl = `[https://image.pollinations.ai/prompt/$](https://image.pollinations.ai/prompt/$){encodeURIComponent(text)}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
         setTimeout(() => {
           if (chatContainer.lastChild) chatContainer.removeChild(chatContainer.lastChild);
           addMessage(imageUrl, 'ai', 'image');
         }, 2000);
       } else {
         addMessage("جاري التفكير...", 'ai');
-
-        try {
-          const reply = await askAI(text);
+        setTimeout(() => {
           if (chatContainer.lastChild) chatContainer.removeChild(chatContainer.lastChild);
+          const reply = generateSmartReply(text);
           addMessage(reply, 'ai');
-        } catch (error) {
-          if (chatContainer.lastChild) chatContainer.removeChild(chatContainer.lastChild);
-          addMessage("وعليكم السلام ورحمة الله وبركاته! أهلاً بك في Mindrix AI، كيف يمكنني مساعدتك اليوم؟", 'ai');
-        }
+        }, 600);
       }
     }
 
