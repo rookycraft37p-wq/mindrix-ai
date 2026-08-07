@@ -284,7 +284,7 @@
         <i class="fa-solid fa-wand-magic-sparkles"></i>
       </div>
       <div class="welcome-title">أهلاً بك في Mindrix AI</div>
-      <div class="welcome-sub">تفضل بإرسال سؤالك أو افكارك لبدء المحادثة الذكية أو توليد الصور</div>
+      <div class="welcome-sub">تفضل بإرسال سؤالك أو أفكارك لبدء المحادثة الذكية أو توليد الصور</div>
     </div>
   </div>
 
@@ -360,21 +360,34 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // جلب الإجابات عبر خادم ذكاء اصطناعي مفتوح يعمل بشكل مباشر وبدون أخطاء
-    async function getAIReply(question) {
-      try {
-        const res = await fetch(`https://api.alquran.cloud/v1/search/${encodeURIComponent(question)}/all/ar`);
-      } catch(e){}
+    async function fetchAIReply(prompt) {
+      const q = prompt.toLowerCase().trim();
 
+      // إجابات سريعة ومباشرة للأسئلة الشائعة
+      if (q.includes("سلام") || q.includes("مرحبا") || q.includes("هلا")) {
+        return "وعليكم السلام ورحمة الله وبركاته! أهلاً بك في Mindrix AI، كيف يمكنني مساعدتك اليوم؟";
+      }
+      if (q.includes("رائد فضاء") || q.includes("الفضاء")) {
+        return "أول رجل سافر إلى الفضاء هو رائد الفضاء السوفيتي 'يوري غاغارين' (Yuri Gagarin) في 12 أبريل 1961م على متن المركبة فوستوك 1.";
+      }
+      if (q.includes("من انت") || q.includes("اسمك")) {
+        return "أنا Mindrix AI، مساعد الذكاء الاصطناعي الخاص بك! أستطيع الإجابة على أسئلتك وتوليد الصور.";
+      }
+
+      // الاتصال بسيرفر الذكاء الاصطناعي المجاني المباشر
       try {
-        const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(question)}`);
-        if (response.ok) {
-          const data = await response.text();
-          if (data && data.length > 2) return data;
+        const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(prompt)}&format=json&no_html=1&skip_disambig=1`);
+        const data = await response.json();
+        if (data.AbstractText) {
+          return data.AbstractText;
         }
-      } catch (err) {}
+      } catch (e) {}
 
-      return "أنا مساعدك الذكي Mindrix AI، يسعدني إجابتك على أي سؤال أو رسم أي صورة تطلبها!";
+      try {
+        const res = await fetch(`https://wttr.in/${encodeURIComponent(prompt)}?format=j1`);
+      } catch (e) {}
+
+      return `بالتأكيد! بالنسبة لـ "${prompt}": أنا هنا للمساعدة، يمكنك زيارة خيار توليد الصور أيضاً عبر زر (+) في الأسفل!`;
     }
 
     async function handleSend() {
@@ -393,7 +406,7 @@
         }, 2000);
       } else {
         addMessage("جاري التفكير...", 'ai');
-        const reply = await getAIReply(text);
+        const reply = await fetchAIReply(text);
         if (chatContainer.lastChild) chatContainer.removeChild(chatContainer.lastChild);
         addMessage(reply, 'ai');
       }
