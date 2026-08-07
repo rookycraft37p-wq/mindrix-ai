@@ -1,108 +1,73 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mindrix AI</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-        body { background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; }
-        .chat-container { width: 100%; max-width: 500px; height: 90vh; background-color: #1e293b; border-radius: 16px; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.5); overflow: hidden; border: 1px solid #334155; }
-        .chat-header { background-color: #0f172a; padding: 15px 20px; text-align: center; border-bottom: 1px solid #334155; }
-        .chat-header h2 { font-size: 1.2rem; color: #38bdf8; }
-        .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
-        .message { max-width: 85%; padding: 10px 14px; border-radius: 12px; line-height: 1.5; font-size: 0.95rem; word-wrap: break-word; white-space: pre-wrap; }
-        .user-message { align-self: flex-end; background-color: #0284c7; color: white; border-bottom-left-radius: 2px; }
-        .bot-message { align-self: flex-start; background-color: #334155; color: #f1f5f9; border-bottom-right-radius: 2px; }
-        .input-container { display: flex; padding: 12px; background-color: #0f172a; gap: 8px; border-top: 1px solid #334155; }
-        input { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #334155; background-color: #1e293b; color: white; outline: none; font-size: 0.95rem; }
-        input:focus { border-color: #38bdf8; }
-        button { padding: 12px 18px; background-color: #0284c7; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0369a1; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mindrix AI - التطبيق المتطور</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <h2>⚡ Mindrix AI</h2>
-        </div>
+  <!-- شريط العنوان الفخم -->
+  <header>
+    Mindrix AI ⚡
+  </header>
 
-        <div class="chat-box" id="chatBox">
-            <div class="message bot-message">
-                Welcome to Mindrix AI! ⚡ أهلاً بك، أنا جاهز لمساعدتك في أي سؤال أو فكرة.
-            </div>
-        </div>
-
-        <div class="input-container">
-            <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">إرسال</button>
-        </div>
+  <!-- صندوق المحادثة -->
+  <div class="chat-container" id="chatContainer">
+    <div class="message ai-message">
+      Welcome to Mindrix AI! ⚡ أهلاً بك، أنا جاهز لمساعدتك في أي سؤال، فكرة، أو برمجة.
     </div>
+  </div>
 
-    <script>
-        // 🔑 ضع مفتاح Groq الخاص بك المنسوخ هنا بين علامات التنصيص
-const part1 = "gsk_MswoQ1m0zi2SJfoLochg";
-const part2 = "WGdyb3FYnbd37TSvlJdT";
-const part3 = "YHjSQdlyG1J9";
+  <!-- خانة إرسال الرسائل -->
+  <div class="input-area">
+    <input type="text" id="userInput" placeholder="اكتب سؤالك أو فكرتك هنا..." autocomplete="off">
+    <button id="sendBtn">إرسال</button>
+  </div>
 
-const API_KEY = part1 + part2 + part3;
+  <script>
+    const chatContainer = document.getElementById('chatContainer');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
 
+    function addMessage(text, sender) {
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('message');
+      if (sender === 'user') {
+        msgDiv.classList.add('user-message');
+      } else {
+        msgDiv.classList.add('ai-message');
+      }
+      msgDiv.textContent = text;
+      chatContainer.appendChild(msgDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-        async function sendMessage() {
-            const input = document.getElementById('userInput');
-            const chatBox = document.getElementById('chatBox');
-            const messageText = input.value.trim();
+    function handleSend() {
+      const text = userInput.value.trim();
+      if (!text) return;
 
-            if (messageText === '') return;
+      addMessage(text, 'user');
+      userInput.value = '';
 
-            const userDiv = document.createElement('div');
-            userDiv.className = 'message user-message';
-            userDiv.textContent = messageText;
-            chatBox.appendChild(userDiv);
-
-            input.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            const botDiv = document.createElement('div');
-            botDiv.className = 'message bot-message';
-            botDiv.textContent = 'جاري التفكير... ⏳';
-            chatBox.appendChild(botDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            try {
-                const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [{ role: "user", content: messageText }]
-                    })
-                });
-
-                const data = await response.json();
-
-                if (data.choices && data.choices[0]) {
-                    botDiv.textContent = data.choices[0].message.content;
-                } else {
-                    botDiv.textContent = "حدث خطأ، تأكد من إضافة المفتاح بشكل صحيح.";
-                }
-            } catch (error) {
-                botDiv.textContent = "عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي.";
-            }
-
-            chatBox.scrollTop = chatBox.scrollHeight;
+      // محاكاة رد ذكي وفخم من الـ AI
+      setTimeout(() => {
+        let reply = "أهلاً بك! لقد تلقيت رسالتك بنجاح وأنا أعمل على تنفيذ فكرتك بكل دقة.";
+        if (text.includes("نكتة")) {
+          reply = "إيش رايح تسوي لو جاك رجل وأنت نايم وقالك: 'آسف، ضيعت الطريق'؟ تقول له: 'طيب، نام هنا حتى تسوقه مرة تانية'!";
+        } else if (text.includes("لعبة")) {
+          reply = "أفضل طريقة لتبدأ بصناعة الألعاب هي استخدام HTML مع JavaScript أو الانتقال لمحرك Unity لاحقاً!";
         }
+        addMessage(reply, 'ai');
+      }, 1000);
+    }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
-            }
-        }
-    </script>
+    sendBtn.addEventListener('click', handleSend);
+    userInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleSend();
+    });
+  </script>
 
 </body>
 </html>
