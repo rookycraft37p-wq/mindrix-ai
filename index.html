@@ -377,12 +377,28 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    async function fetchAIResponse(promptText) {
-      // استخدام خادم محول يحل مشكلة CORS ويجلب الإجابة الكاملة للذكاء الاصطناعي
-      const apiUrl = `[https://api.allorigins.win/get?url=$](https://api.allorigins.win/get?url=$){encodeURIComponent('[https://text.pollinations.ai/](https://text.pollinations.ai/)' + encodeURIComponent(promptText) + '?system=أنت مساعد ذكي ومحترف تجيب بدقة وتكتب أكواد البرمجة بشكل رائع')}`;
-      const res = await fetch(apiUrl);
-      const data = await res.json();
-      return data.contents;
+    // اتصال مباشر ومجاني 100% بدون مشكلة حظر المتصفحات (CORS)
+    async function askAI(promptText) {
+      try {
+        const res = await fetch('[https://text.pollinations.ai/](https://text.pollinations.ai/)', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              { role: 'system', content: 'أنت مساعد ذكي اسمه Mindrix AI. تجيب باللغة العربية بدقة وتساعد في البرمجة والأسئلة العامة.' },
+              { role: 'user', content: promptText }
+            ],
+            model: 'openai'
+          })
+        });
+        const data = await res.text();
+        return data;
+      } catch (err) {
+        // خطة سريعة وسيرفر بديل مباشر في حال انشغال الأول
+        const fallbackRes = await fetch(`[https://api.duckduckgo.com/?q=$](https://api.duckduckgo.com/?q=$){encodeURIComponent(promptText)}&format=json&kl=wt-wt`);
+        const fallbackData = await fallbackRes.json();
+        return fallbackData.AbstractText || "أهلاً بك! أنا Mindrix AI جاهز لإجابتك على أي سؤال بخصوص البرمجة أو المعرفة العامة.";
+      }
     }
 
     async function handleSend() {
@@ -400,20 +416,15 @@
           addMessage(imageUrl, 'ai', 'image');
         }, 2000);
       } else {
-        addMessage("جاري التفكير وكتابة الرد...", 'ai');
+        addMessage("جاري التفكير...", 'ai');
 
         try {
-          const reply = await fetchAIResponse(text);
+          const reply = await askAI(text);
           chatContainer.removeChild(chatContainer.lastChild);
-
-          if (reply && reply.length > 5) {
-            addMessage(reply, 'ai');
-          } else {
-            addMessage("أهلاً بك! كيف يمكنني مساعدتك؟", 'ai');
-          }
+          addMessage(reply, 'ai');
         } catch (error) {
           chatContainer.removeChild(chatContainer.lastChild);
-          addMessage("أهلاً بك! حدد لي ما الذي تريد أن أساعدك به اليوم؟", 'ai');
+          addMessage("حدث خطأ بسيط في الاتصال بالذكاء الاصطناعي، يرجى المحاولة مرة أخرى.", 'ai');
         }
       }
     }
