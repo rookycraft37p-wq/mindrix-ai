@@ -23,9 +23,7 @@
       z-index: 100;
       min-width: 180px;
     }
-    .action-menu.active {
-      display: flex;
-    }
+    .action-menu.active { display: flex; }
     .action-item {
       background: transparent;
       border: none;
@@ -38,11 +36,6 @@
       align-items: center;
       gap: 10px;
       font-size: 14px;
-      transition: background 0.2s;
-    }
-    .action-item:hover {
-      background: rgba(56, 189, 248, 0.2);
-      color: #38bdf8;
     }
     .mode-indicator {
       font-size: 11px;
@@ -56,13 +49,11 @@
 </head>
 <body>
 
-  <header>
-    Mindrix AI ⚡
-  </header>
+  <header>Mindrix AI ⚡</header>
 
   <div class="chat-container" id="chatContainer">
     <div class="message ai-message">
-      Welcome to Mindrix AI! ⚡ أهلاً بك، أنا جاهز لمساعدتك في أي سؤال أو لتوليد الصور.
+      Welcome to Mindrix AI! ⚡ أهلاً بك، التطبيق يعمل الآن بكامل قوته ومستعد للرد على جميع أسئلتك وتوليد الصور!
     </div>
   </div>
 
@@ -73,13 +64,11 @@
     </div>
 
     <div class="input-area">
-      <button class="icon-btn" id="addBtn" title="خيارات إضافية"><i class="fa-solid fa-plus"></i></button>
-      
+      <button class="icon-btn" id="addBtn"><i class="fa-solid fa-plus"></i></button>
       <div style="flex: 1; display: flex; flex-direction: column;">
         <span id="modeIndicator" class="mode-indicator">الوضع: محادثة ذكية 💬</span>
-        <input type="text" id="userInput" placeholder="اكتب سؤالك أو فكرتك هنا..." autocomplete="off">
+        <input type="text" id="userInput" placeholder="اكتب سؤالك هنا..." autocomplete="off">
       </div>
-
       <button class="send-btn" id="sendBtn"><i class="fa-solid fa-arrow-up"></i></button>
     </div>
   </div>
@@ -99,16 +88,14 @@
       actionMenu.classList.toggle('active');
     });
 
-    document.addEventListener('click', () => {
-      actionMenu.classList.remove('active');
-    });
+    document.addEventListener('click', () => actionMenu.classList.remove('active'));
 
     function setMode(mode) {
       currentMode = mode;
       actionMenu.classList.remove('active');
       if (mode === 'chat') {
         modeIndicator.textContent = "الوضع: محادثة ذكية 💬";
-        userInput.placeholder = "اكتب سؤالك أو فكرتك هنا...";
+        userInput.placeholder = "اكتب سؤالك هنا...";
       } else {
         modeIndicator.textContent = "الوضع: توليد صور AI 🎨";
         userInput.placeholder = "صف الصورة التي تريد رسمها...";
@@ -117,19 +104,16 @@
 
     function addMessage(text, sender, type = 'text') {
       const msgDiv = document.createElement('div');
-      msgDiv.classList.add('message');
-      msgDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+      msgDiv.classList.add('message', sender === 'user' ? 'user-message' : 'ai-message');
 
       if (type === 'text') {
         msgDiv.textContent = text;
       } else if (type === 'image') {
         const imgElement = document.createElement('img');
         imgElement.src = text;
-        imgElement.alt = "صورة مولدة بالذكاء الاصطناعي";
         imgElement.style.maxWidth = "100%";
         imgElement.style.borderRadius = "12px";
         imgElement.style.marginTop = "10px";
-        imgElement.onclick = () => window.open(text, '_blank');
         msgDiv.textContent = "إليك الصورة التي تم توليدها:";
         msgDiv.appendChild(imgElement);
       }
@@ -146,59 +130,28 @@
       userInput.value = '';
 
       if (currentMode === 'image') {
-        addMessage("جاري رسم وتوليد الصورة بالذكاء الاصطناعي...", 'ai');
-        const encodedPrompt = encodeURIComponent(text);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
-
-        setTimeout(() => {
-          addMessage(imageUrl, 'ai', 'image');
-        }, 2000);
-
+        addMessage("جاري رسم وتوليد الصورة...", 'ai');
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(text)}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+        setTimeout(() => addMessage(imageUrl, 'ai', 'image'), 2000);
       } else {
         addMessage("جاري التفكير...", 'ai');
-        
-        // تجميع المفتاح برمجياً لمنع اكتشافه وحظره من GitHub
-        const p1 = "AQ.Ab8RN6KT_";
-        const p2 = "ZOp9ssmnneZdo";
-        const p3 = "Ld4UWfjy1r4Lg";
-        const p4 = "VL4JFkxT47jWpfg";
-        const API_KEY = p1 + p2 + p3 + p4;
-
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
         try {
-          const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: text }] }]
-            })
-          });
-
-          const data = await response.json();
-          const reply = data.candidates[0].content.parts[0].text;
+          // استخدام محرك ذكاء اصطناعي نصي مجاني ومباشر دون الحاجة لمفتاح مفرد
+          const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}`);
+          const reply = await response.text();
           
           chatContainer.removeChild(chatContainer.lastChild);
           addMessage(reply, 'ai');
         } catch (error) {
           chatContainer.removeChild(chatContainer.lastChild);
-          addMessage("عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي.", 'ai');
+          addMessage("عذراً، حدث خطأ أثناء الاتصال. حاول مرة أخرى.", 'ai');
         }
       }
     }
 
     sendBtn.addEventListener('click', handleSend);
-    userInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') handleSend();
-    });
-
-    document.addEventListener('click', function(e) {
-      if (e.target.tagName === 'A') {
-        e.preventDefault();
-        window.location.href = e.target.href;
-      }
-    });
+    userInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleSend(); });
   </script>
-
 </body>
 </html>
