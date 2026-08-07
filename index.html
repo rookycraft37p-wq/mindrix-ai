@@ -317,6 +317,9 @@
   </div>
 
   <script>
+    // ضع مفتاح الـ API المجاني الخاص بك هنا بين التنصيص
+    const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+
     const chatContainer = document.getElementById('chatContainer');
     const welcomeScreen = document.getElementById('welcomeScreen');
     const userInput = document.getElementById('userInput');
@@ -377,27 +380,21 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // اتصال مباشر ومجاني 100% بدون مشكلة حظر المتصفحات (CORS)
-    async function askAI(promptText) {
-      try {
-        const res = await fetch('[https://text.pollinations.ai/](https://text.pollinations.ai/)', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: [
-              { role: 'system', content: 'أنت مساعد ذكي اسمه Mindrix AI. تجيب باللغة العربية بدقة وتساعد في البرمجة والأسئلة العامة.' },
-              { role: 'user', content: promptText }
-            ],
-            model: 'openai'
-          })
-        });
-        const data = await res.text();
-        return data;
-      } catch (err) {
-        // خطة سريعة وسيرفر بديل مباشر في حال انشغال الأول
-        const fallbackRes = await fetch(`[https://api.duckduckgo.com/?q=$](https://api.duckduckgo.com/?q=$){encodeURIComponent(promptText)}&format=json&kl=wt-wt`);
-        const fallbackData = await fallbackRes.json();
-        return fallbackData.AbstractText || "أهلاً بك! أنا Mindrix AI جاهز لإجابتك على أي سؤال بخصوص البرمجة أو المعرفة العامة.";
+    async function callGeminiAPI(promptText) {
+      const url = `[https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$](https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=$){GEMINI_API_KEY}`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }]
+        })
+      });
+
+      const data = await response.json();
+      if (data.candidates && data.candidates[0].content.parts[0].text) {
+        return data.candidates[0].content.parts[0].text;
+      } else {
+        throw new Error('API Error');
       }
     }
 
@@ -419,12 +416,12 @@
         addMessage("جاري التفكير...", 'ai');
 
         try {
-          const reply = await askAI(text);
+          const reply = await callGeminiAPI(text);
           chatContainer.removeChild(chatContainer.lastChild);
           addMessage(reply, 'ai');
         } catch (error) {
           chatContainer.removeChild(chatContainer.lastChild);
-          addMessage("حدث خطأ بسيط في الاتصال بالذكاء الاصطناعي، يرجى المحاولة مرة أخرى.", 'ai');
+          addMessage("يرجى التأكد من إضافة API Key الخاص بـ Gemini بشكل صحيح داخل الكود.", 'ai');
         }
       }
     }
