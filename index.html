@@ -3,43 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mindrix AI - التطبيق المتطور</title>
+  <title>Mindrix AI - التطبيق الشامل</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* تصميم القائمة المنبثقة لزر الزائد (+) */
+    .action-menu {
+      position: absolute;
+      bottom: 70px;
+      left: 15px;
+      background: rgba(22, 27, 46, 0.95);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 16px;
+      padding: 10px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      min-width: 180px;
+    }
+    .action-menu.active {
+      display: flex;
+    }
+    .action-item {
+      background: transparent;
+      border: none;
+      color: #fff;
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-align: right;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .action-item:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+    }
+    /* مؤشر الوضع الحالي بجانب خانة الإدخال */
+    .mode-indicator {
+      font-size: 11px;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- شريط العنوان الفخم -->
   <header>
     Mindrix AI ⚡
   </header>
 
-  <!-- صندوق المحادثة -->
   <div class="chat-container" id="chatContainer">
     <div class="message ai-message">
-      Welcome to Mindrix AI! ⚡ أهلاً بك، أنا جاهز لمساعدتك في أي سؤال، فكرة، أو برمجة.
+      Welcome to Mindrix AI! ⚡ أهلاً بك. اضغط على زر ( <b>+</b> ) في الأسفل لتبديل الوضع بين <b>محادثة نصية</b> أو <b>توليد الصور بالذكاء الاصطناعي</b>!
     </div>
   </div>
 
-  <!-- خانة إرسال الرسائل -->
-  <div class="input-area">
-    <input type="text" id="userInput" placeholder="اكتب سؤالك أو فكرتك هنا..." autocomplete="off">
-    <button id="sendBtn">إرسال</button>
+  <div class="input-area-wrapper">
+    <!-- قائمة الخيارات (تظهر عند الضغط على +) -->
+    <div class="action-menu" id="actionMenu">
+      <button class="action-item" onclick="setMode('chat')"><i class="fa-solid fa-comments text-sky-400"></i> محادثة ذكية 💬</button>
+      <button class="action-item" onclick="setMode('image')"><i class="fa-solid fa-image text-purple-400"></i> توليد صور AI 🎨</button>
+    </div>
+
+    <div class="input-area">
+      <button class="icon-btn" id="addBtn" title="خيارات إضافية"><i class="fa-solid fa-plus"></i></button>
+      
+      <div style="flex: 1; display: flex; flex-direction: column;">
+        <span id="modeIndicator" class="mode-indicator">الوضع: محادثة ذكية 💬</span>
+        <input type="text" id="userInput" placeholder="اكتب رسالتك هنا..." autocomplete="off">
+      </div>
+
+      <button class="send-btn" id="sendBtn"><i class="fa-solid fa-arrow-up"></i></button>
+    </div>
   </div>
 
   <script>
     const chatContainer = document.getElementById('chatContainer');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const addBtn = document.getElementById('addBtn');
+    const actionMenu = document.getElementById('actionMenu');
+    const modeIndicator = document.getElementById('modeIndicator');
 
-    function addMessage(text, sender) {
+    let currentMode = 'chat'; // الوضع الافتراضي محادثة
+
+    // إظهار وإخفاء القائمة عند الضغط على زر الزائد
+    addBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      actionMenu.classList.toggle('active');
+    });
+
+    // إخفاء القائمة عند الضغط في أي مكان بالشاشة
+    document.addEventListener('click', () => {
+      actionMenu.classList.remove('active');
+    });
+
+    // تبديل الوضع (محادثة أو صور)
+    function setMode(mode) {
+      currentMode = mode;
+      actionMenu.classList.remove('active');
+      if (mode === 'chat') {
+        modeIndicator.textContent = "الوضع: محادثة ذكية 💬";
+        userInput.placeholder = "اكتب سؤالك أو فكرتك هنا...";
+      } else {
+        modeIndicator.textContent = "الوضع: توليد صور AI 🎨";
+        userInput.placeholder = "صف الصورة التي تريد رسمها (مثال: نمر يرتدي نظارة)...";
+      }
+    }
+
+    function addMessage(text, sender, type = 'text') {
       const msgDiv = document.createElement('div');
       msgDiv.classList.add('message');
-      if (sender === 'user') {
-        msgDiv.classList.add('user-message');
-      } else {
-        msgDiv.classList.add('ai-message');
+      msgDiv.classList.add(sender === 'user' ? 'user-message' : 'ai-message');
+
+      if (type === 'text') {
+        msgDiv.textContent = text;
+      } else if (type === 'image') {
+        const imgElement = document.createElement('img');
+        imgElement.src = text;
+        imgElement.alt = "صورة مولدة بالذكاء الاصطناعي";
+        imgElement.style.maxWidth = "100%";
+        imgElement.style.borderRadius = "12px";
+        imgElement.style.marginTop = "10px";
+        imgElement.onclick = () => window.open(text, '_blank');
+        msgDiv.textContent = "إليك الصورة التي تم توليدها بناءً على طلبك:";
+        msgDiv.appendChild(imgElement);
       }
-      msgDiv.textContent = text;
+
       chatContainer.appendChild(msgDiv);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
@@ -51,16 +151,27 @@
       addMessage(text, 'user');
       userInput.value = '';
 
-      // محاكاة رد ذكي وفخم من الـ AI
-      setTimeout(() => {
-        let reply = "أهلاً بك! لقد تلقيت رسالتك بنجاح وأنا أعمل على تنفيذ فكرتك بكل دقة.";
-        if (text.includes("نكتة")) {
-          reply = "إيش رايح تسوي لو جاك رجل وأنت نايم وقالك: 'آسف، ضيعت الطريق'؟ تقول له: 'طيب، نام هنا حتى تسوقه مرة تانية'!";
-        } else if (text.includes("لعبة")) {
-          reply = "أفضل طريقة لتبدأ بصناعة الألعاب هي استخدام HTML مع JavaScript أو الانتقال لمحرك Unity لاحقاً!";
-        }
-        addMessage(reply, 'ai');
-      }, 1000);
+      if (currentMode === 'image') {
+        // --- وضع توليد الصور ---
+        addMessage("جاري رسم وتوليد الصورة بالذكاء الاصطناعي...", 'ai');
+        
+        const encodedPrompt = encodeURIComponent(text);
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?nologo=true&seed=${Math.floor(Math.random() * 100000)}`;
+
+        setTimeout(() => {
+          addMessage(imageUrl, 'ai', 'image');
+        }, 2500);
+
+      } else {
+        // --- وضع المحادثة النصية ---
+        setTimeout(() => {
+          let reply = "أهلاً بك! لقد استلمت رسالتك وأنا أعمل على خدمتك.";
+          if (text.includes("نكتة")) {
+            reply = "إيش رايح تسوي لو جاك رجل وأنت نايم وقالك: 'آسف، ضيعت الطريق'؟ تقول له: 'طيب، نام هنا حتى تسوقه مرة تانية'!";
+          }
+          addMessage(reply, 'ai');
+        }, 1000);
+      }
     }
 
     sendBtn.addEventListener('click', handleSend);
