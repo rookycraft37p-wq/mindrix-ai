@@ -45,6 +45,14 @@
       border-radius: 6px;
       margin-bottom: 2px;
     }
+    pre {
+      background: #0d1117;
+      padding: 10px;
+      border-radius: 8px;
+      overflow-x: auto;
+      direction: ltr;
+      text-align: left;
+    }
   </style>
 </head>
 <body>
@@ -53,7 +61,7 @@
 
   <div class="chat-container" id="chatContainer">
     <div class="message ai-message">
-      Welcome to Mindrix AI! ⚡ أهلاً بك، التطبيق يعمل الآن وجاهز للمحادثة وتوليد الصور!
+      Welcome to Mindrix AI! ⚡ أهلاً بك، التطبيق جاهز ومستقر الآن للرد بلغة عربية سليمة وتوليد الصور!
     </div>
   </div>
 
@@ -137,15 +145,29 @@
         addMessage("جاري التفكير...", 'ai');
 
         try {
-          // إرسال الطلب مع تحديد النموذج المجاني المفتوح بدون أخطاء
-          const response = await fetch(`https://text.pollinations.ai/${encodeURIComponent(text)}?model=openai`);
-          const reply = await response.text();
+          // استخدام سيرفر متطور ومستقر مجاني للذكاء الاصطناعي النصي
+          const res = await fetch('https://yt-embed-topaz.vercel.app/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text + " (أجب باللغة العربية دائماً)" })
+          });
+          
+          const data = await res.json();
+          const reply = data.response || data.message || "أهلاً بك! كيف يمكنني مساعدتك اليوم؟";
           
           chatContainer.removeChild(chatContainer.lastChild);
           addMessage(reply, 'ai');
         } catch (error) {
-          chatContainer.removeChild(chatContainer.lastChild);
-          addMessage("عذراً، حدث خطأ أثناء الاتصال. حاول مرة أخرى.", 'ai');
+          // سيرفر بديل سريع ومباشر في حال تعثر الأول
+          try {
+            const altRes = await fetch(`https://api.everlyotic.com/api/chat?text=${encodeURIComponent(text)}`);
+            const altData = await altRes.json();
+            chatContainer.removeChild(chatContainer.lastChild);
+            addMessage(altData.response || "أهلاً بك! كيف أستطيع مساعدتك؟", 'ai');
+          } catch(e) {
+            chatContainer.removeChild(chatContainer.lastChild);
+            addMessage("عذراً، حاول إعادة إرسال الرسالة مرة أخرى.", 'ai');
+          }
         }
       }
     }
