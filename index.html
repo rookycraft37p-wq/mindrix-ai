@@ -655,19 +655,28 @@ async function askGroq() {
 }
 
 function generateImage(prompt) {
-    return new Promise(resolve => {
-        const seed = Math.floor(Math.random() * 1000000);
-        const url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) + "?nologo=true&private=true&enhance=true&ignore_default_prompt=true&no_upscale=true&seed=" + seed;
-        const image = new Image();
-        image.onload = () => resolve(url);
-        image.onerror = () => resolve(url);
-        image.src = url;
-    });
+  return new Promise(resolve => {
+
+    const seed = Math.floor(Math.random() * 1000000);
+
+    const safePrompt =
+      "family friendly, appropriate, no nudity, no sexual content, no graphic violence, " +
+      prompt;
+
+    const url =
+      "https://image.pollinations.ai/prompt/" +
+      encodeURIComponent(safePrompt) +
+      "?nologo=true&seed=" + seed;
+
+    const image = new Image();
+
+    image.onload = () => resolve(url);
+
+    image.onerror = () => resolve(null);
+
+    image.src = url;
+  });
 }
-
-
-
-
 
 async function handleSend() {
   if (isLoading) return;
