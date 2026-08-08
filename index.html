@@ -37,7 +37,6 @@
       overflow: hidden;
     }
 
-    /* تم تنزيل الـ Header لأسفل لتجنب التداخل مع الساعة والبطارية */
     header {
       margin: 45px 15px 0 15px;
       padding: 12px 20px;
@@ -65,6 +64,25 @@
       color: #f59e0b;
       filter: drop-shadow(0 0 8px #f59e0b);
       animation: pulse 2s infinite;
+    }
+
+    .new-chat-icon-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .new-chat-icon-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: var(--accent-color);
     }
 
     .chat-container {
@@ -311,6 +329,10 @@
     <i class="fa-solid fa-bolt"></i>
     <span>Mindrix AI</span>
   </div>
+  <!-- زر صفحة جديدة في الأعلى -->
+  <button class="new-chat-icon-btn" id="newChatBtn" title="محادثة جديدة">
+    <i class="fa-solid fa-pen-to-square"></i>
+  </button>
 </header>
 
 <div class="chat-container" id="chatContainer">
@@ -335,6 +357,7 @@
 
 <div class="input-wrapper">
 
+  <!-- قائمة اختيار الوضع (تظهر عند الضغط على زر +) -->
   <div class="action-menu" id="actionMenu">
 
     <button class="action-item" onclick="setMode('chat')">
@@ -351,8 +374,7 @@
 
   <div class="input-box">
 
-    <!-- زر علامة الزائد (+) تم برمجته لفتح صفحة جديدة ومسح الرسائل -->
-    <button class="btn-icon" id="newChatBtn" title="صفحة جديدة">
+    <button class="btn-icon" id="addBtn">
       <i class="fa-solid fa-plus"></i>
     </button>
 
@@ -390,7 +412,6 @@ const part2 = "WGdyb3FYPa8EXujz";
 const part3 = "WfWGAq4QsY5F0uoW";
 
 const GROQ_API_KEY = part1 + part2 + part3;
-
 const GROQ_MODEL = "llama-3.3-70b-versatile";
 
 
@@ -402,10 +423,10 @@ const chatContainer = document.getElementById("chatContainer");
 const welcomeScreen = document.getElementById("welcomeScreen");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
-const newChatBtn = document.getElementById("newChatBtn");
-const addBtn = document.getElementById("addBtn"); // ملاحظة: تم دمج وظيفة الزائد، وإن أردت قائمة الوضع يمكنك إضافتها لاحقاً
+const addBtn = document.getElementById("addBtn");
 const actionMenu = document.getElementById("actionMenu");
 const modeIndicator = document.getElementById("modeIndicator");
+const newChatBtn = document.getElementById("newChatBtn");
 
 
 /* =========================================================
@@ -415,10 +436,6 @@ const modeIndicator = document.getElementById("modeIndicator");
 let currentMode = "chat";
 let isFirstMessage = true;
 let isLoading = false;
-
-/*
-   ذاكرة المحادثة
-*/
 let conversation = [];
 
 
@@ -451,9 +468,8 @@ const SYSTEM_PROMPT = `
 
 function addMessage(text, sender, type = "text") {
   if (isFirstMessage) {
-    if (welcomeScreen) {
-      welcomeScreen.style.display = "none";
-    }
+    const ws = document.getElementById("welcomeScreen");
+    if (ws) ws.style.display = "none";
     isFirstMessage = false;
   }
 
@@ -487,7 +503,7 @@ function addMessage(text, sender, type = "text") {
 
 
 /* =========================================================
-   حفظ المحادثة
+   حفظ وتحميل المحادثة
    ========================================================= */
 
 function saveConversation() {
@@ -497,11 +513,6 @@ function saveConversation() {
     console.log("تعذر حفظ المحادثة", error);
   }
 }
-
-
-/* =========================================================
-   تحميل المحادثة
-   ========================================================= */
 
 function loadConversation() {
   try {
@@ -513,9 +524,8 @@ function loadConversation() {
 
     conversation = data;
     isFirstMessage = false;
-    if (welcomeScreen) {
-      welcomeScreen.style.display = "none";
-    }
+    const ws = document.getElementById("welcomeScreen");
+    if (ws) ws.style.display = "none";
 
     conversation.forEach(message => {
       if (message.role === "user") {
@@ -532,16 +542,14 @@ function loadConversation() {
 
 
 /* =========================================================
-   زر صفحة جديدة (+) - مسح المحادثة والبدء من جديد
+   زر صفحة جديدة (مسح المحادثة والبدء من جديد)
    ========================================================= */
 
 newChatBtn.addEventListener("click", function() {
-  // مسح الذاكرة المحلية
   localStorage.removeItem("mindrix_conversation");
   conversation = [];
   isFirstMessage = true;
 
-  // إعادة الشاشة لحالتها الأصلية مع إظهار شاشة الترحيب
   chatContainer.innerHTML = `
     <div class="welcome-screen" id="welcomeScreen">
       <div class="welcome-icon">
@@ -555,22 +563,26 @@ newChatBtn.addEventListener("click", function() {
       </div>
     </div>
   `;
-  
-  // إعادة ربط متغير شاشة الترحيب بعد إعادة إنشائها
-  window.welcomeScreen = document.getElementById("welcomeScreen");
   userInput.value = "";
 });
 
 
 /* =========================================================
-   تغيير الوضع
+   إدارة القائمة المنبثقة للـ (+) وتغيير الوضع
    ========================================================= */
+
+addBtn.addEventListener("click", function(event) {
+  event.stopPropagation();
+  actionMenu.classList.toggle("active");
+});
+
+document.addEventListener("click", function() {
+  actionMenu.classList.remove("active");
+});
 
 function setMode(mode) {
   currentMode = mode;
-  if (actionMenu) {
-    actionMenu.classList.remove("active");
-  }
+  actionMenu.classList.remove("active");
 
   if (mode === "chat") {
     modeIndicator.textContent = "الوضع: محادثة ذكية";
@@ -583,7 +595,7 @@ function setMode(mode) {
 
 
 /* =========================================================
-   إرسال طلب Groq
+   إرسال طلب Groq والتوليد
    ========================================================= */
 
 async function askGroq() {
@@ -615,18 +627,12 @@ async function askGroq() {
   }
 
   const data = await response.json();
-
   if (!data.choices || !data.choices[0] || !data.choices[0].message) {
     throw new Error("رد Groq غير صالح");
   }
 
   return data.choices[0].message.content.trim();
 }
-
-
-/* =========================================================
-   توليد الصور
-   ========================================================= */
 
 function generateImage(prompt) {
   return new Promise(resolve => {
@@ -642,11 +648,6 @@ function generateImage(prompt) {
   });
 }
 
-
-/* =========================================================
-   إرسال الرسالة
-   ========================================================= */
-
 async function handleSend() {
   if (isLoading) return;
 
@@ -656,7 +657,7 @@ async function handleSend() {
   addMessage(text, "user");
   userInput.value = "";
 
-  /* توليد الصور */
+  /* وضع توليد الصور */
   if (currentMode === "image") {
     isLoading = true;
     sendBtn.disabled = true;
@@ -677,7 +678,7 @@ async function handleSend() {
     return;
   }
 
-  /* المحادثة الذكية */
+  /* وضع المحادثة الذكية */
   isLoading = true;
   sendBtn.disabled = true;
 
@@ -720,7 +721,7 @@ userInput.addEventListener("keydown", function(event) {
 
 
 /* =========================================================
-   تشغيل التطبيق وتحميل المحادثة المحفوظة
+   تشغيل التطبيق
    ========================================================= */
 
 loadConversation();
