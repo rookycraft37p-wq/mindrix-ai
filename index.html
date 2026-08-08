@@ -655,18 +655,18 @@ async function askGroq() {
 }
 
 function generateImage(prompt) {
-  return new Promise(resolve => {
-    const seed = Math.floor(Math.random() * 1000000);
-    const url = "https://image.pollinations.ai/prompt/" +
-      encodeURIComponent(prompt) +
-      "?nologo=true&seed=" + seed;
-
-    const image = new Image();
-    image.onload = () => resolve(url);
-    image.onerror = () => resolve(null);
-    image.src = url;
-  });
+    return new Promise(resolve => {
+        const seed = Math.floor(Math.random() * 1000000);
+        const url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt) + "?nologo=true&private=true&enhance=true&seed=" + seed;
+        const image = new Image();
+        image.onload = () => resolve(url);
+        image.onerror = () => resolve(url);
+        image.src = url;
+    });
 }
+
+
+
 
 async function handleSend() {
   if (isLoading) return;
