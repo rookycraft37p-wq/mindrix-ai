@@ -534,30 +534,152 @@ function saveConversation() {
   }
 }
 
-function loadConversation() {
+async function checkImageSafety(prompt) {
+
+  const safetyPolicy = `
+أنت نظام أمان لتطبيق Mindrix AI.
+
+حدد هل طلب إنشاء الصورة مناسب وآمن أم لا.
+
+اعتبر الطلب غير مسموح إذا كان يطلب:
+- محتوى جنسي أو إباحي.
+- تعرٍ أو محتوى غير مناسب.
+- استغلال القاصرين.
+- عنف أو دماء بشكل صريح.
+- أي محتوى غير مناسب للعامة.
+
+الطلبات العادية مثل:
+الطبيعة، الحيوانات، الألعاب، السيارات،
+الفضاء، الرسومات، الأنمي، الشعارات،
+المباني والمناظر تعتبر آمنة.
+
+أجب فقط:
+SAFE
+أو
+BLOCK
+`;
+
   try {
-    const saved = localStorage.getItem("mindrix_conversation");
-    if (!saved) return;
 
-    const data = JSON.parse(saved);
-    if (!Array.isArray(data) || data.length === 0) return;
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
 
-    conversation = data;
-    isFirstMessage = false;
-    const ws = document.getElementById("welcomeScreen");
-    if (ws) ws.style.display = "none";
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + GROQ_API_KEY
+        },
 
-    conversation.forEach(message => {
-      if (message.role === "user") {
-        addMessage(message.content, "user");
-      } else if (message.role === "assistant") {
-        addMessage(message.content, "ai");
+        body: JSON.stringify({
+          model: "openai/gpt-oss-safeguard-20b",
+
+          messages: [
+            {
+              role: "system",
+              content: safetyPolicy
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+
+          temperature: 0,
+          max_tokens: 10
+        })
       }
-    });
+    );
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = await response.json();
+
+    const result =
+      data?.choices?.[0]?.message?.content
+        ?.trim()
+        ?.toUpperCase();
+
+    return result === "SAFE";
+
   } catch (error) {
-    conversation = [];
-    console.log("تعذر تحميل المحادثة", error);
+
+    console.error("Safety error:", error);
+
+    return false;
   }
+}
+
+
+async function generateImage(prompt) {
+
+  const isSafe =
+    await checkImageSafety(prompt);
+
+  if (!isSafe) {
+
+    return {
+      success: false,
+      message:
+        "عذرًا، لا أستطيع إنشاء هذه الصورة. جرّب وصفًا آخر مناسبًا."
+    };
+  }
+
+  const safePrompt =
+    "family friendly, appropriate, clean and safe visual content, " +
+    prompt;
+
+  const seed =
+    Math.floor(Math.random() * 1000000);
+
+  const POLLINATIONS_KEY =
+    "const part1 = "gsk_fPHL8GT6GzvG3UiWh3cu";
+
+const part2 = "WGdyb3FYPa8EXujz";
+
+const part3 = "WfWGAq4QsY5F0uoW";
+
+const GROQ_API_KEY = part1 + part2 + part3;
+
+  const url =
+    "https://gen.pollinations.ai/image/" +
+    encodeURIComponent(safePrompt) +
+    "?model=zimage" +
+    "&safe=true" +
+    "&width=1024" +
+    "&height=1024" +
+    "&seed=" + seed +
+    "&key=" +
+    encodeURIComponent(POLLINATIONS_KEY);
+
+  return new Promise(resolve => {
+
+    const image = new Image();
+
+    image.onload = function() {
+
+      resolve({
+        success: true,
+        url: url
+      });
+
+    };
+
+    image.onerror = function() {
+
+      resolve({
+        success: false,
+        message:
+          "تعذر توليد الصورة حاليًا. حاول مرة أخرى."
+      });
+
+    };
+
+    image.src = url;
+
+  });
 }
 
 
@@ -689,23 +811,51 @@ async function handleSend() {
 
   /* وضع توليد الصور */
   if (currentMode === "image") {
-    isLoading = true;
-    sendBtn.disabled = true;
+  if (currentMode === 'image') {
 
-    const loading = addMessage("جاري رسم وتوليد الصورة...", "ai");
-    const imageUrl = await generateImage(text);
+  const loading =
+    addMessage(
+      "جاري فحص طلب الصورة...",
+      "ai"
+    );
+
+  try {
+
+    const result =
+      await generateImage(text);
+
     loading.remove();
 
-    if (imageUrl) {
-      addMessage(imageUrl, "ai", "image");
+    if (!result.success) {
+
+      addMessage(
+        result.message,
+        "ai"
+      );
+
     } else {
-      addMessage("تعذر توليد الصورة حاليًا. حاول مرة أخرى.", "ai");
+
+      addMessage(
+        result.url,
+        "ai",
+        "image"
+      );
+
     }
 
-    isLoading = false;
-    sendBtn.disabled = false;
-    userInput.focus();
-    return;
+  } catch (error) {
+
+    console.error(error);
+
+    loading.remove();
+
+    addMessage(
+      "عذرًا، حدث خطأ أثناء معالجة الصورة.",
+      "ai"
+    );
+  }
+
+  return;
   }
 
   /* وضع المحادثة الذكية */
