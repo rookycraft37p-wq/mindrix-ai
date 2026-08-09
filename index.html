@@ -1016,28 +1016,45 @@ userInput.addEventListener("keydown", function(event) {
    تشغيل التطبيق
    ========================================================= */
 
-loadConversation();
-// 1. تفعيل زر الإرسال
-document.getElementById("sendBtn").onclick = function() {
-    handleSend();
-};
+document.addEventListener("DOMContentLoaded", function() {
+    const sendBtn = document.getElementById("sendBtn");
+    const voiceBtn = document.getElementById("voiceBtn");
+    const addBtn = document.getElementById("addBtn");
+    const actionMenu = document.getElementById("actionMenu");
+    const userInput = document.getElementById("userInput");
 
-// 2. تفعيل الميكروفون الصوتي
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.lang = "ar-SA";
-recognition.onresult = function(e) {
-    document.getElementById("userInput").value = e.results[0][0].transcript;
-    handleSend();
-};
-document.getElementById("voiceBtn").onclick = function() {
-    recognition.start();
-};
+    if (sendBtn) {
+        sendBtn.onclick = function() {
+            alert("تم النقر على زر الإرسال!");
+            if (typeof handleSend === "function") handleSend();
+        };
+    }
 
-// 3. تفعيل زر القائمة (+)
-document.getElementById("addBtn").onclick = function(e) {
-    e.stopPropagation();
-    document.getElementById("actionMenu").classList.toggle("active");
-};
+    if (addBtn && actionMenu) {
+        addBtn.onclick = function(e) {
+            e.stopPropagation();
+            actionMenu.classList.toggle("active");
+        };
+        document.onclick = function() {
+            actionMenu.classList.remove("active");
+        };
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition && voiceBtn) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ar-SA";
+        recognition.onresult = function(e) {
+            if (userInput) {
+                userInput.value = e.results[0][0].transcript;
+                if (typeof handleSend === "function") handleSend();
+            }
+        };
+        voiceBtn.onclick = function() {
+            recognition.start();
+        };
+    }
+});
 
 </script>
 
