@@ -538,6 +538,20 @@ function saveConversation() {
     console.log("تعذر حفظ المحادثة", error);
   }
 }
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "ar-SA";
+recognition.onresult = (e) => { 
+    document.getElementById("userInput").value = e.results[0][0].transcript; 
+    handleSend(); 
+};
+document.getElementById("voiceBtn").onclick = () => recognition.start();
+
+function speakMindrix(text) {
+    speechSynthesis.cancel();
+    const ut = new SpeechSynthesisUtterance(text.replace(/[*#_]/g, ""));
+    ut.lang = "ar-SA";
+    speechSynthesis.speak(ut);
+}
 
 async function checkImageSafety(prompt) {
 
