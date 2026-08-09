@@ -1017,33 +1017,27 @@ userInput.addEventListener("keydown", function(event) {
    ========================================================= */
 
 loadConversation();
-document.addEventListener("DOMContentLoaded", function() {
-    const sendBtn = document.getElementById("sendBtn");
-    const addBtn = document.getElementById("addBtn");
-    const voiceBtn = document.getElementById("voiceBtn");
-    const actionMenu = document.getElementById("actionMenu");
-    const userInput = document.getElementById("userInput");
+// 1. تفعيل زر الإرسال
+document.getElementById("sendBtn").onclick = function() {
+    handleSend();
+};
 
-    if (sendBtn) sendBtn.onclick = handleSend;
-    
-    if (addBtn && actionMenu) {
-        addBtn.onclick = (e) => { e.stopPropagation(); actionMenu.classList.toggle("active"); };
-        document.onclick = () => actionMenu.classList.remove("active");
-    }
+// 2. تفعيل الميكروفون الصوتي
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.lang = "ar-SA";
+recognition.onresult = function(e) {
+    document.getElementById("userInput").value = e.results[0][0].transcript;
+    handleSend();
+};
+document.getElementById("voiceBtn").onclick = function() {
+    recognition.start();
+};
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (SpeechRecognition && voiceBtn) {
-        const recognition = new SpeechRecognition();
-        recognition.lang = "ar-SA";
-        recognition.onresult = (e) => { 
-            if (userInput) {
-                userInput.value = e.results[0][0].transcript; 
-                handleSend(); 
-            }
-        };
-        voiceBtn.onclick = () => recognition.start();
-    }
-});
+// 3. تفعيل زر القائمة (+)
+document.getElementById("addBtn").onclick = function(e) {
+    e.stopPropagation();
+    document.getElementById("actionMenu").classList.toggle("active");
+};
 
 </script>
 
