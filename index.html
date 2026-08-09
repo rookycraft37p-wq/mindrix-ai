@@ -1017,6 +1017,33 @@ userInput.addEventListener("keydown", function(event) {
    ========================================================= */
 
 loadConversation();
+document.addEventListener("DOMContentLoaded", function() {
+    const sendBtn = document.getElementById("sendBtn");
+    const addBtn = document.getElementById("addBtn");
+    const voiceBtn = document.getElementById("voiceBtn");
+    const actionMenu = document.getElementById("actionMenu");
+    const userInput = document.getElementById("userInput");
+
+    if (sendBtn) sendBtn.onclick = handleSend;
+    
+    if (addBtn && actionMenu) {
+        addBtn.onclick = (e) => { e.stopPropagation(); actionMenu.classList.toggle("active"); };
+        document.onclick = () => actionMenu.classList.remove("active");
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition && voiceBtn) {
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ar-SA";
+        recognition.onresult = (e) => { 
+            if (userInput) {
+                userInput.value = e.results[0][0].transcript; 
+                handleSend(); 
+            }
+        };
+        voiceBtn.onclick = () => recognition.start();
+    }
+});
 
 </script>
 
