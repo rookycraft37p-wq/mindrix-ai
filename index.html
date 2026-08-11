@@ -508,18 +508,17 @@ async function generateImage(prompt) {
 }
 
 async function askGroq() {
-    const lastUserMsg = conversation[conversation.length - 1].content;
-    const url = "https://text.pollinations.ai/" + encodeURIComponent(lastUserMsg) + "?model=openai";
-
-    const response = await fetch(url);
-
+    const userText = conversation[conversation.length - 1].content;
+    const response = await fetch(`https://api.popcat.xyz/chatbot?msg=${encodeURIComponent(userText)}&owner=Mindrix&bot=MindrixAI`);
+    
     if (!response.ok) {
-        throw new Error("API Connection Failed");
+        throw new Error("Connection failed");
     }
-
-    const data = await response.text();
-    return data.trim();
+    
+    const data = await response.json();
+    return data.response;
 }
+
 
 
 
