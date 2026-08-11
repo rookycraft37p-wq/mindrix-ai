@@ -523,71 +523,29 @@ async function askGroq() {
 
 
 
-
-
-
 async function handleSend() {
     if (isLoading) return;
-
+    
     const text = userInput.value.trim();
     if (!text) return;
-
+    
     addMessage(text, "user");
     userInput.value = "";
-
-    if (currentMode === "image") {
-        isLoading = true;
-        sendBtn.disabled = true;
-
-        const loading = addMessage("جاري توليد الصورة المطلوبة...", "ai");
-
-        try {
-            const result = await generateImage(text);
-            loading.remove();
-
-            if (!result.success) {
-                addMessage(result.message, "ai");
-            } else {
-                addMessage(result.url, "ai", "image");
-                conversation.push({ role: "user", content: text });
-                conversation.push({ role: "assistant", content: result.url });
-                saveConversation();
-            }
-        } catch (error) {
-            loading.remove();
-            addMessage("عذرًا، حدث خطأ أثناء معالجة الصورة.", "ai");
-        }
-
-        isLoading = false;
-        sendBtn.disabled = false;
-        userInput.focus();
-        return;
-    }
-
-    isLoading = true;
-    sendBtn.disabled = true;
-
+    
     conversation.push({ role: "user", content: text });
-    saveConversation();
-
-    const loading = addMessage("جاري التفكير...", "ai");
-
+    
     try {
         const reply = await askGroq();
-        loading.remove();
-        addMessage(reply, "ai");
-        speakMindrix(reply);
-
+        addMessage(reply, "assistant");
         conversation.push({ role: "assistant", content: reply });
-        saveConversation();
     } catch (error) {
-        loading.textContent = "عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي. تأكد من اتصال الإنترنت.";
+        // هنا سيطبع لك الخطأ الحقيقي على الشاشة لنعرف السبب فوراً
+        addMessage("خطأ تقني: " + error.message, "assistant");
     }
-
-    isLoading = false;
-    sendBtn.disabled = false;
-    userInput.focus();
 }
+
+
+
 
 document.addEventListener("DOMContentLoaded", function() {
     loadConversation();
