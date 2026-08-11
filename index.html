@@ -532,15 +532,43 @@ async function handleSend() {
     addMessage(text, "user");
     userInput.value = "";
     
+    isLoading = true;
+    sendBtn.disabled = true;
+    
     conversation.push({ role: "user", content: text });
+    saveConversation();
+    
+    const loading = addMessage("جاري التفكير...", "ai");
     
     try {
-        const reply = await askGroq();
-        addMessage(reply, "assistant");
-        conversation.push({ role: "assistant", content: reply });
+        const response = await fetch("https://text.pollinations.ai/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                messages: [
+                    { role: "system", content: typeof SYSTEM_PROMPT !== 'undefined' ? SYSTEM_PROMPT : "You are a helpful assistant." },
+                    ...conversation
+                ],
+                model: "openai"
+            })
+        });
+        
+        if (!response.ok) throw new Error("Connection failed");
+        
+        const reply = await response.text();
+        loading.remove();
+        
+        addMessage(reply.trim(), "ai");
+        conversation.push({ role: "assistant", content: reply.trim() });
+        saveConversation();
+        
     } catch (error) {
-        // هنا سيطبع لك الخطأ الحقيقي على الشاشة لنعرف السبب فوراً
-        addMessage("خطأ تقني: " + error.message, "assistant");
+        loading.remove();
+        addMessage("عذراً، حدث خطأ في الاتصال بالذكاء الاصطناعي.", "ai");
+    } finally {
+        isLoading = false;
+        sendBtn.disabled = false;
+        userInput.focus();
     }
 }
 
