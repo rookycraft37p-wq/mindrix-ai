@@ -508,20 +508,18 @@ async function generateImage(prompt) {
 }
 
 async function askGroq() {
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const response = await fetch("https://text.pollinations.ai/", {
         method: "POST",
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + GROQ_API_KEY
+            "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
             messages: [
                 { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: conversation[conversation.length - 1].content }
+                ...conversation
             ],
-            temperature: 0.7,
-            max_tokens: 1024
+            model: "openai",
+            jsonMode: false
         })
     });
 
@@ -529,9 +527,10 @@ async function askGroq() {
         throw new Error("API Connection Failed");
     }
 
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
+    const data = await response.text();
+    return data.trim();
 }
+
 
 async function handleSend() {
     if (isLoading) return;
